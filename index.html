@@ -1,0 +1,1217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Academic Event Management System</title>
+
+  <!-- Fonts & Icons -->
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <!-- FullCalendar -->
+  <link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js"></script>
+
+  <!-- Google Identity Services -->
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; font-family:'Roboto',sans-serif; }
+    :root {
+      --primary:#4361ee; --secondary:#3f37c9; --success:#4cc9f0; --warning:#f72585;
+      --light:#f8f9fa; --dark:#212529; --gray:#6c757d; --light-gray:#e9ecef;
+      --green:#28a745; --red:#dc3545;
+    }
+    body { background:#f5f7fb; color:var(--dark); line-height:1.6; }
+    .container { width:100%; max-width:1200px; margin:0 auto; padding:0 20px; }
+    header { background:linear-gradient(135deg,var(--primary),var(--secondary)); color:#fff; padding:1rem 0; box-shadow:0 2px 10px rgba(0,0,0,.1); }
+    .header-content { display:flex; justify-content:space-between; align-items:center; }
+    .logo { font-size:1.8rem; font-weight:700; display:flex; align-items:center; gap:10px; }
+    .logo i { color:var(--success); }
+    .user-info { display:flex; align-items:center; gap:15px; }
+    .user-avatar { width:40px; height:40px; border-radius:50%; background:var(--success); display:flex; align-items:center; justify-content:center; font-weight:bold; }
+    .login-section { display:flex; justify-content:center; align-items:center; min-height:80vh; }
+    .login-card { background:#fff; border-radius:10px; box-shadow:0 10px 30px rgba(0,0,0,.1); padding:2.5rem; width:100%; max-width:520px; text-align:center; }
+    .login-card h2 { margin-bottom:1.5rem; color:var(--primary); }
+    .login-card p { color:var(--gray); margin-bottom:2rem; line-height:1.6; }
+    .instructions { background:#e7f4ff; border-left:4px solid var(--primary); padding:20px; border-radius:0 8px 8px 0; margin:2rem 0; }
+    .instructions h3 { color:var(--primary); margin-bottom:15px; }
+    .instructions p { padding-left:20px; }
+    .dashboard { display:none; }
+    .dashboard-header { display:flex; justify-content:space-between; align-items:center; padding:1.5rem 0; border-bottom:1px solid var(--light-gray); margin-bottom:2rem; }
+    .dashboard-title { font-size:1.8rem; font-weight:600; color:var(--primary); }
+    .role-badge { background:var(--primary); color:#fff; padding:5px 15px; border-radius:20px; font-size:.9rem; }
+    .nav-tabs { display:flex; gap:5px; margin-bottom:2rem; border-bottom:1px solid var(--light-gray); overflow-x:auto; padding-bottom:5px; }
+    .tab { padding:12px 20px; cursor:pointer; border-bottom:3px solid transparent; transition:all .3s ease; white-space:nowrap; }
+    .tab.active { border-bottom:3px solid var(--primary); color:var(--primary); font-weight:500; }
+    .tab:hover:not(.active) { background:var(--light-gray); }
+    .content-section { display:none; }
+    .content-section.active { display:block; }
+
+    .table-container { background:#fff; border-radius:8px; box-shadow:0 2px 10px rgba(0,0,0,.05); overflow:hidden; margin-bottom:2rem; }
+    table { width:100%; border-collapse:collapse; }
+    th,td { padding:12px 15px; text-align:left; border-bottom:1px solid var(--light-gray); }
+    th { background:#f8f9fa; font-weight:600; color:var(--gray); }
+    tr:hover { background:#f8f9fa; }
+    .status-badge { padding:5px 12px; border-radius:20px; font-size:.85rem; font-weight:500; }
+    .status-pending { background:#fff3cd; color:#856404; }
+    .status-approved { background:#d4edda; color:#155724; }
+    .status-rejected { background:#f8d7da; color:#721c24; }
+
+    .form-container { background:#fff; border-radius:8px; box-shadow:0 2px 10px rgba(0,0,0,.05); padding:2rem; margin-bottom:2rem; }
+    .form-group { margin-bottom:1.25rem; }
+    .form-group label { display:block; margin-bottom:.5rem; font-weight:500; color:var(--dark); }
+    .form-control { width:100%; padding:10px 15px; border:1px solid #ced4da; border-radius:4px; font-size:1rem; }
+    .form-control:focus { outline:none; border-color:var(--primary); box-shadow:0 0 0 3px rgba(67,97,238,.1); }
+    textarea.form-control { min-height:88px; resize:vertical; }
+
+    .btn { padding:10px 20px; border:none; border-radius:4px; cursor:pointer; font-size:1rem; font-weight:500; transition:all .3s ease; display:inline-flex; align-items:center; gap:8px; }
+    .btn-primary { background:var(--primary); color:#fff; }
+    .btn-primary:hover { background:var(--secondary); }
+    .btn-outline { background:transparent; border:1px solid var(--primary); color:var(--primary); }
+    .btn-outline:hover { background:var(--primary); color:#fff; }
+    .btn-success { background:var(--green); color:#fff; }
+    .btn-warning { background:#ffc107; color:#212529; }
+    .btn-danger { background:var(--red); color:#fff; }
+    .action-buttons { display:flex; gap:10px; flex-wrap:wrap; }
+
+    .stats-container { display:grid; grid-template-columns:repeat(auto-fit,minmax(250px,1fr)); gap:20px; margin-bottom:2rem; }
+    .stat-card { background:#fff; border-radius:8px; box-shadow:0 2px 10px rgba(0,0,0,.05); padding:1.5rem; display:flex; align-items:center; gap:15px; }
+    .stat-icon { width:60px; height:60px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:1.5rem; }
+    .stat-icon-blue { background:rgba(67,97,238,.1); color:var(--primary); }
+    .stat-icon-green { background:rgba(40,167,69,.1); color:var(--green); }
+    .stat-icon-orange { background:rgba(255,193,7,.1); color:#ffc107; }
+    .stat-icon-red { background:rgba(220,53,69,.1); color:var(--red); }
+    .stat-content h3 { font-size:2rem; margin-bottom:5px; }
+    .stat-content p { color:var(--gray); font-size:.9rem; }
+
+    #calendar { background:#fff; border-radius:8px; box-shadow:0 2px 10px rgba(0,0,0,.05); padding:20px; margin-bottom:2rem; }
+    .spinner { border:4px solid rgba(0,0,0,.1); border-radius:50%; border-top:4px solid var(--primary); width:30px; height:30px; animation:spin 1s linear infinite; margin:20px auto; display:none; }
+    @keyframes spin { 0%{transform:rotate(0)} 100%{transform:rotate(360deg)} }
+
+    @media (max-width: 900px) {
+      .container { padding: 0 6px; }
+      .dashboard-header { flex-direction: column; align-items: flex-start; gap: 8px; }
+      .stats-container { grid-template-columns: 1fr; }
+      .nav-tabs { flex-wrap: wrap; font-size: 0.98rem; }
+    }
+    @media (max-width: 600px) {
+      html, body { font-size: 15px; }
+      .container { padding: 0 2px; }
+      .header-content { flex-direction: column; gap: 10px; }
+      .login-card { padding: 1rem; }
+      .dashboard-header { flex-direction: column; align-items: flex-start; gap: 6px; }
+      .stats-container { grid-template-columns: 1fr; gap: 10px; }
+      .stat-card { flex-direction: row; padding: 1rem; font-size: 0.98rem; }
+      .nav-tabs { flex-wrap: wrap; font-size: 0.95rem; }
+      .tab { padding: 8px 10px; font-size: 0.98rem; }
+      .form-container { padding: 1rem; }
+      .form-group label { font-size: 0.98rem; }
+      .form-control { font-size: 0.98rem; padding: 8px 10px; }
+      .btn { font-size: 0.98rem; padding: 8px 10px; }
+      .action-buttons { flex-direction: column; gap: 6px; }
+      th, td { padding: 6px 6px; font-size: 0.92rem; }
+      .modal { width: 98vw; min-width: unset; }
+    }
+    /* Responsive tables: horizontal scroll on small screens */
+    .table-container { overflow-x: auto; }
+    table { min-width: 600px; }
+    @media (max-width: 500px) {
+      table { min-width: 400px; }
+      .modal { width: 100vw; }
+    }
+
+    /* Modal */
+    .modal-backdrop { position:fixed; inset:0; background:rgba(0,0,0,.4); display:none; align-items:center; justify-content:center; z-index:9999; }
+    .modal { width:min(600px,92vw); background:#fff; border-radius:12px; box-shadow:0 10px 30px rgba(0,0,0,.2); overflow:hidden; }
+    .modal-header,.modal-footer { padding:14px 16px; background:#f8f9fa; display:flex; align-items:center; justify-content:space-between; }
+    .modal-title { font-weight:600; color:var(--dark); }
+    .modal-body { padding:16px; max-height:70vh; overflow:auto; }
+    .modal-close { border:none; background:transparent; font-size:1.25rem; cursor:pointer; line-height:1; }
+    .modal-footer .btn + .btn { margin-left:8px; }
+  </style>
+</head>
+<body>
+
+  <!-- Login Section -->
+  <div id="loginSection" class="login-section">
+    <div class="login-card">
+      <h2><i class="fas fa-calendar-alt"></i> Academic Event Management</h2>
+      <p>Manage academic events, approvals, and tasks in one place. Sign in with your Google Workspace account.</p>
+
+      <!-- Google Sign-In -->
+      <div id="g_id_onload"
+           data-client_id="414597183450-3okhv6vrk0i28vkrrse8de4io2odu62r.apps.googleusercontent.com"
+           data-callback="onGoogleSignIn"
+           data-auto_prompt="false"></div>
+      <div class="g_id_signin"
+           data-type="standard" data-size="large" data-theme="outline"
+           data-text="sign_in_with" data-shape="rectangular" data-logo_alignment="left"></div>
+
+      <div class="instructions">
+        <h3>System Status</h3>
+        <p id="apiStatus">Checking API connection...</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Dashboard -->
+  <div id="dashboard" class="dashboard">
+    <header>
+      <div class="container">
+        <div class="header-content">
+          <div class="logo"><i class="fas fa-calendar-alt"></i><span>Event Manager</span></div>
+          <div class="user-info">
+            <div class="user-avatar" id="userInitial">U</div>
+            <div>
+              <div id="userName">User</div>
+              <div id="userEmail" style="font-size:.9rem;opacity:.9;">user@school.edu</div>
+            </div>
+            <button class="btn btn-outline" id="logoutBtn">Logout</button>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <div class="container">
+      <div class="dashboard-header">
+        <h1 class="dashboard-title">Academic Event Dashboard</h1>
+        <span class="role-badge" id="userRole">Teacher</span>
+      </div>
+
+      <!-- Stats -->
+      <div class="stats-container">
+        <div class="stat-card"><div class="stat-icon stat-icon-blue"><i class="fas fa-calendar-check"></i></div><div class="stat-content"><h3 id="totalEvents">0</h3><p>Total Events</p></div></div>
+        <div class="stat-card"><div class="stat-icon stat-icon-green"><i class="fas fa-check-circle"></i></div><div class="stat-content"><h3 id="approvedEvents">0</h3><p>Approved Events</p></div></div>
+        <div class="stat-card"><div class="stat-icon stat-icon-orange"><i class="fas fa-clock"></i></div><div class="stat-content"><h3 id="pendingApprovals">0</h3><p>Pending Approvals</p></div></div>
+        <div class="stat-card"><div class="stat-icon stat-icon-red"><i class="fas fa-tasks"></i></div><div class="stat-content"><h3 id="activeTasks">0</h3><p>Active Tasks</p></div></div>
+      </div>
+
+      <!-- Tabs -->
+      <div class="nav-tabs">
+        <div class="tab active" data-tab="calendar">Calendar</div>
+        <div class="tab" data-tab="events">Yearly Events</div>
+        <div class="tab" data-tab="approvals">Event Approvals</div>
+        <div class="tab" data-tab="tasks">Tasks</div>
+        <div class="tab" data-tab="live">Live Events</div>
+      </div>
+
+      <!-- Calendar -->
+      <div id="calendarSection" class="content-section active">
+        <div id="calendar"></div>
+        <div class="instructions">
+          <h3>Calendar Legend</h3>
+          <p>
+            <span style="display:inline-block;width:12px;height:12px;background:#4361ee;border-radius:50%;margin-right:5px;"></span>Yearly Event Plan
+            <span style="display:inline-block;width:12px;height:12px;background:#f72585;border-radius:50%;margin:0 15px 0 25px;"></span>Event Approval
+            <span style="display:inline-block;width:12px;height:12px;background:#4cc9f0;border-radius:50%;margin:0 15px 0 25px;"></span>Live Event
+          </p>
+        </div>
+      </div>
+
+      <!-- Yearly Events -->
+      <div id="eventsSection" class="content-section">
+        <div class="table-container">
+          <div class="spinner" id="eventsSpinner"></div>
+          <table id="eventsTable">
+            <thead>
+              <tr><th>ID</th><th>Title</th><th>Date</th><th>Category</th><th>Assigned To</th><th>Status</th><th id="sendApprovalColumn">Actions</th></tr>
+            </thead>
+            <tbody id="eventsTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Approvals -->
+      <div id="approvalsSection" class="content-section">
+        <div class="form-container" id="approvalForm">
+          <h2>Create Event Approval Request (Teacher)</h2>
+          <input type="hidden" id="approvalEventId"><!-- Yearly Event ID (YP###) -->
+          <form id="approvalRequestForm">
+            <div class="form-group"><label for="eventTitle">Event Title</label><input type="text" id="eventTitle" class="form-control" required></div>
+            <div class="form-group"><label for="eventDate">Event Date</label><input type="date" id="eventDate" class="form-control" required></div>
+            <div class="form-group"><label for="startTime">Start Time (IST)</label><input type="time" id="startTime" class="form-control"></div>
+            <div class="form-group"><label for="endTime">End Time (IST)</label><input type="time" id="endTime" class="form-control"></div>
+            <div class="form-group"><label for="description">Description</label><textarea id="description" class="form-control"></textarea></div>
+            <div class="form-group"><label for="budgetINR">Budget (INR)</label><input type="number" id="budgetINR" class="form-control" placeholder="e.g. 15000"></div>
+            <div class="form-group"><label for="props">Props</label><input type="text" id="props" class="form-control" placeholder="e.g. Projector, Mic, etc."></div>
+            <div class="form-group"><label for="plan">Plan</label><textarea id="plan" class="form-control" placeholder="Describe the event plan..."></textarea></div>
+            <button type="submit" class="btn btn-primary">Submit for Approval</button>
+          </form>
+        </div>
+
+        <div class="table-container">
+          <div class="spinner" id="approvalsSpinner"></div>
+          <table id="approvalsTable">
+            <thead><tr><th>Approval ID</th><th>Event ID</th><th>Title</th><th>Date</th><th>Teacher</th><th>Status</th><th>Actions</th></tr></thead>
+            <tbody id="approvalsTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Tasks -->
+      <div id="tasksSection" class="content-section">
+        <div class="form-container">
+          <h2>Create New Task</h2>
+          <form id="taskForm">
+            <div class="form-group">
+              <label for="taskEvent">Approved Event</label>
+              <select id="taskEvent" class="form-control" required>
+                <option value="">Select Approved Event</option>
+              </select>
+            </div>
+            <div class="form-group"><label for="taskTitle">Task Title</label><input type="text" id="taskTitle" class="form-control" required></div>
+            <div class="form-group"><label for="taskDate">Date</label><input type="date" id="taskDate" class="form-control" required></div>
+            <div class="form-group"><label for="taskStart">Start Time (IST)</label><input type="time" id="taskStart" class="form-control"></div>
+            <div class="form-group"><label for="taskEnd">End Time (IST)</label><input type="time" id="taskEnd" class="form-control"></div>
+            <div class="form-group"><label for="assignedTo">Assign To</label><select id="assignedTo" class="form-control"></select></div>
+            <button type="submit" class="btn btn-primary">Create Task</button>
+          </form>
+        </div>
+
+        <div class="table-container">
+          <div class="spinner" id="tasksSpinner"></div>
+          <table id="tasksTable">
+            <thead><tr><th>ID</th><th>Event ID</th><th>Title</th><th>Date</th><th>Start</th><th>End</th><th>Created By</th><th>Status</th><th>Actions</th></tr></thead>
+            <tbody id="tasksTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Live -->
+      <div id="liveSection" class="content-section">
+        <div id="liveAdminControls" style="display:none; margin-bottom:16px; gap:8px; flex-wrap:wrap;" class="action-buttons">
+          <button class="btn btn-primary" id="btnSyncLive"><i class="fas fa-sync"></i> Sync Live from Approvals</button>
+          <button class="btn btn-success" id="btnStartLive"><i class="fas fa-play"></i> Start Live (manual)</button>
+          <button class="btn btn-danger" id="btnStopLive"><i class="fas fa-stop"></i> Stop Live (manual)</button>
+          <button class="btn btn-warning" id="btnPhaseLive"><i class="fas fa-flag"></i> Update Phase</button>
+          <button class="btn btn-outline" id="btnTickLive"><i class="fas fa-clock"></i> Tick Status (auto)</button>
+        </div>
+        <div class="table-container">
+          <div class="spinner" id="liveEventsSpinner"></div>
+          <table id="liveEventsTable">
+            <thead><tr><th>ID</th><th>Event ID</th><th>Status</th><th>Started At</th><th>Ended At</th><th>Updated At</th><th>Updated By</th><th>Phase</th><th>Comments</th></tr></thead>
+            <tbody id="liveEventsTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Details Modal -->
+  <div id="modalBackdrop" class="modal-backdrop" role="dialog" aria-modal="true" aria-hidden="true">
+    <div class="modal" role="document">
+      <div class="modal-header">
+        <div class="modal-title" id="modalTitle">Details</div>
+        <button class="modal-close" id="modalCloseBtn" aria-label="Close">&times;</button>
+      </div>
+      <div class="modal-body" id="modalBody"></div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" id="modalCancelBtn">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Task Edit Modal (Admin) -->
+  <div id="taskEditBackdrop" class="modal-backdrop" role="dialog" aria-modal="true" aria-hidden="true">
+    <div class="modal" role="document">
+      <div class="modal-header">
+        <div class="modal-title">Edit / Reassign Task</div>
+        <button class="modal-close" id="taskEditClose" aria-label="Close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="taskEditForm">
+          <input type="hidden" id="editTaskId">
+          <div class="form-group"><label for="editTaskEvent">Approved Event</label><select id="editTaskEvent" class="form-control" required></select></div>
+          <div class="form-group"><label for="editTaskTitle">Task Title</label><input type="text" id="editTaskTitle" class="form-control" required></div>
+          <div class="form-group"><label for="editTaskDate">Date</label><input type="date" id="editTaskDate" class="form-control" required></div>
+          <div class="form-group"><label for="editTaskStart">Start Time (IST)</label><input type="time" id="editTaskStart" class="form-control"></div>
+          <div class="form-group"><label for="editTaskEnd">End Time (IST)</label><input type="time" id="editTaskEnd" class="form-control"></div>
+          <div class="form-group"><label for="editAssignedTo">Assign To</label><select id="editAssignedTo" class="form-control" multiple></select></div>
+          <div class="form-group">
+            <label for="editTaskStatus">Status</label>
+            <select id="editTaskStatus" class="form-control">
+              <option value="Pending">Pending</option>
+              <option value="In Progress">In Progress</option>
+              <option value="Completed">Completed</option>
+            </select>
+          </div>
+          <div class="modal-footer" style="padding:0; margin-top:12px;">
+            <button type="button" class="btn btn-outline" id="taskEditCancel">Cancel</button>
+            <button type="submit" class="btn btn-primary">Save Changes</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ---------------- Config ----------------
+    const CONFIG = {
+      API_BASE_URL: 'https://script.google.com/macros/s/AKfycbxfNMXysmYZDsG7w7kVkoAiVuVbuuAxvtrcqoQFhCb12msKyJBd6zaA5BL91b9oD3_D/exec'
+    };
+
+    // ---------------- Globals ----------------
+    let currentUser = { name:'', email:'', role:'teacher' };
+    let staffData = [];       // Staff: id, name, email, role, contact
+    let yearlyEventsData = []; // YearlyEvents: id, title, date (DD-MM-YYYY), category, assignedTo, status, notes, academicYear
+    let approvalsData = [];   // Approvals: id(EV-###), eventId(YP###), teacherEmail, title, date (DD-MM-YYYY), startTime, endTime, description, budget, props, plan, status, reviewerEmail, reviewNotes, createdAt
+    let tasksData = [];       // Tasks: id(T-###), eventId(YP###), title, date (DD-MM-YYYY), startTime, endTime, createdBy, status, assignedTo
+    let liveEventsData = [];  // LiveEvents: id, eventId, status, startedAt, endedAt, updatedAt, updatedBy, currentPhase, comments
+
+    // ---------------- DOM ----------------
+    const loginSection = document.getElementById('loginSection');
+    const dashboard = document.getElementById('dashboard');
+    const logoutBtn = document.getElementById('logoutBtn');
+    const tabs = document.querySelectorAll('.tab');
+    const contentSections = document.querySelectorAll('.content-section');
+    const userRoleElement = document.getElementById('userRole');
+    const apiStatus = document.getElementById('apiStatus');
+    const approvalRequestForm = document.getElementById('approvalRequestForm');
+    const taskForm = document.getElementById('taskForm');
+
+  // Approval form fields
+  const approvalEventIdInput = document.getElementById('approvalEventId');
+  const eventTitleInput = document.getElementById('eventTitle');
+  const eventDateInput = document.getElementById('eventDate');
+  const startTimeInput = document.getElementById('startTime');
+  const endTimeInput = document.getElementById('endTime');
+  const descriptionInput = document.getElementById('description');
+  const budgetINRInput = document.getElementById('budgetINR');
+  // NEW: Props and Plan fields
+  const propsInput = document.getElementById('props');
+  const planInput  = document.getElementById('plan');
+
+    // Modals
+    const modalBackdrop = document.getElementById('modalBackdrop');
+    const modalTitleEl   = document.getElementById('modalTitle');
+       const modalBodyEl    = document.getElementById('modalBody');
+    const modalCloseBtn  = document.getElementById('modalCloseBtn');
+    const modalCancelBtn = document.getElementById('modalCancelBtn');
+
+    const taskEditBackdrop = document.getElementById('taskEditBackdrop');
+    const taskEditClose = document.getElementById('taskEditClose');
+    const taskEditCancel = document.getElementById('taskEditCancel');
+    const taskEditForm = document.getElementById('taskEditForm');
+    const editTaskId = document.getElementById('editTaskId');
+    const editTaskEvent = document.getElementById('editTaskEvent');
+    const editTaskTitle = document.getElementById('editTaskTitle');
+    const editTaskDate = document.getElementById('editTaskDate');
+    const editTaskStart = document.getElementById('editTaskStart');
+    const editTaskEnd = document.getElementById('editTaskEnd');
+    const editAssignedTo = document.getElementById('editAssignedTo');
+    const editTaskStatus = document.getElementById('editTaskStatus');
+
+    // ---------------- Helpers (dates, ids, roles) ----------------
+    const norm = (x='') => String(x).trim().toLowerCase();
+    const pad3 = (n) => String(n).padStart(3,'0');
+
+    // Date <-> format helpers
+    const isoToDMY = (iso) => { // "YYYY-MM-DD" => "DD-MM-YYYY"
+      if (!iso) return '';
+      const [y,m,d] = String(iso).slice(0,10).split('-');
+      if (!y||!m||!d) return iso;
+      return `${d}-${m}-${y}`;
+    };
+    const dmyToISO = (dmy) => { // "DD-MM-YYYY" => "YYYY-MM-DD"
+      if (!dmy) return '';
+      const [d,m,y] = String(dmy).split('-');
+      if (!d||!m||!y) return dmy;
+      return `${y}-${m}-${d}`;
+    };
+
+    function displayId(id,prefix){ // pretty-print with desired prefix
+      if (!id) return '';
+      const s = String(id);
+      if (s.startsWith(prefix)) return s;
+      const m = s.match(/(\d+)$/);
+      return m ? `${prefix}${pad3(Number(m[1]))}` : s;
+    }
+    function nextId(prefix, rows, field='id') { // T-, EV-, etc.
+      let max=0;
+      (rows||[]).forEach(o=>{
+        const raw=String(o[field]||'');
+        const num=(raw.startsWith(prefix)?raw.replace(prefix,''):raw).match(/\d+/);
+        if (num) max=Math.max(max, Number(num[0]));
+      });
+      return `${prefix}${pad3(max+1)}`;
+    }
+    function isEventAssignedToUser(ev, user) {
+      const assigned = ev.assignedTo || ev['Assigned To'] || '';
+      return norm(assigned).includes(norm(user.email)) || norm(assigned).includes(norm(user.name));
+    }
+
+    // ---------------- Boot / Health ----------------
+    window.addEventListener('DOMContentLoaded', async () => {
+      try {
+        const res = await fetch(`${CONFIG.API_BASE_URL}?action=health`);
+        apiStatus.innerHTML = res.ok
+          ? '<span style="color: green;">✅ Connected to backend API successfully!</span>'
+          : '<span style="color: red;">❌ Failed to connect to backend API.</span>';
+      } catch {
+        apiStatus.innerHTML = '<span style="color: red;">❌ Failed to connect to backend API.</span>';
+      }
+    });
+
+    // ---------------- Auth ----------------
+    // --- Persistent Login using localStorage ---
+    async function onGoogleSignIn(response) {
+      const idToken = response.credential;
+      try {
+        const payload = JSON.parse(atob(idToken.split('.')[1]));
+        const email = payload.email;
+        const ADMINS = new Set(['hm@ayathanschool.com','dinukrishna@ayathanschool.com']);
+        const role = ADMINS.has(email.toLowerCase()) ? 'admin' : 'teacher';
+        await loginUser(payload.name, email, role);
+      } catch (error) {
+        console.error('Error processing Google Sign-In:', error);
+        alert('Failed to sign in. Please try again.');
+      }
+    }
+    window.onGoogleSignIn = onGoogleSignIn;
+
+    async function loginUser(name, email, role) {
+      currentUser = { name, email, role };
+      // Save to localStorage
+      localStorage.setItem('aem_user', JSON.stringify(currentUser));
+      loginSection.style.display = 'none';
+      dashboard.style.display = 'block';
+      document.getElementById('userName').textContent = name;
+      document.getElementById('userEmail').textContent = email;
+      document.getElementById('userInitial').textContent = name.charAt(0);
+      userRoleElement.textContent = role.charAt(0).toUpperCase() + role.slice(1);
+      adjustUIForRole(role);
+      await loadAllData();
+      initializeCalendar();
+    }
+    // On page load, check for saved user
+    window.addEventListener('DOMContentLoaded', async () => {
+      try {
+        const res = await fetch(`${CONFIG.API_BASE_URL}?action=health`);
+        apiStatus.innerHTML = res.ok
+          ? '<span style="color: green;">✅ Connected to backend API successfully!</span>'
+          : '<span style="color: red;">❌ Failed to connect to backend API.</span>';
+      } catch {
+        apiStatus.innerHTML = '<span style="color: red;">❌ Failed to connect to backend API.</span>';
+      }
+      // Persistent login check
+      const saved = localStorage.getItem('aem_user');
+      if (saved) {
+        try {
+          const user = JSON.parse(saved);
+          if (user && user.name && user.email && user.role) {
+            await loginUser(user.name, user.email, user.role);
+          }
+        } catch {}
+      }
+    });
+    logoutBtn.addEventListener('click', () => {
+      // Clear localStorage
+      localStorage.removeItem('aem_user');
+      loginSection.style.display = 'flex';
+      dashboard.style.display = 'none';
+      if (window.google?.accounts?.id) window.google.accounts.id.disableAutoSelect();
+    });
+    function adjustUIForRole(role) {
+      const isAdmin = role === 'admin';
+      // Remove teacher approval form for admins
+      const formHost = document.getElementById('approvalForm');
+      if (isAdmin && formHost) formHost.remove();
+      // Hide "Send for Approval" column for admins
+      const sendApprovalCol = document.getElementById('sendApprovalColumn');
+      if (sendApprovalCol) sendApprovalCol.style.display = isAdmin ? 'none' : '';
+      // Assignee select visibility
+      const assignedToGroup = document.getElementById('assignedTo')?.closest('.form-group');
+      if (assignedToGroup) assignedToGroup.style.display = isAdmin ? '' : 'none';
+
+      // Show/hide Live admin controls
+      const liveAdmin = document.getElementById('liveAdminControls');
+      if (liveAdmin) liveAdmin.style.display = isAdmin ? 'flex' : 'none';
+    }
+    // --- LiveEvents Admin Controls (admin only) ---
+    function showLiveSpinner(on) { const el=document.getElementById('liveEventsSpinner'); if(el) el.style.display=on?'block':'none'; }
+    async function callLiveRoute(action, data) {
+      showLiveSpinner(true);
+      try {
+        const res = await fetch(`${CONFIG.API_BASE_URL}?action=${action}`, {
+          method: data ? 'POST' : 'GET',
+          headers: { 'Content-Type': 'text/plain' },
+          ...(data ? { body: JSON.stringify(data) } : {})
+        });
+        // Try to reload live events after any action
+        await loadLiveEventsData();
+        updateLiveEventsTable();
+        if (res.ok) {
+          const r = await res.json();
+          if (r && r.success) alert(`${action} succeeded.`);
+          else alert(`${action} completed, but check backend.`);
+        } else {
+          alert(`${action} failed.`);
+        }
+      } catch(e) {
+        alert(`${action} error: `+e);
+      } finally {
+        showLiveSpinner(false);
+      }
+    }
+
+    // Attach admin live event button handlers after DOMContentLoaded
+    window.addEventListener('DOMContentLoaded', () => {
+      const btnSync = document.getElementById('btnSyncLive');
+      const btnStart = document.getElementById('btnStartLive');
+      const btnStop = document.getElementById('btnStopLive');
+      const btnPhase = document.getElementById('btnPhaseLive');
+      const btnTick = document.getElementById('btnTickLive');
+      if (btnSync) btnSync.onclick = () => callLiveRoute('sync-live');
+      if (btnStart) btnStart.onclick = async () => {
+        const eventId = prompt('Enter Event ID (e.g. YP001) to start live:');
+        if (eventId) await callLiveRoute('live-start', { eventId });
+      };
+      if (btnStop) btnStop.onclick = async () => {
+        const eventId = prompt('Enter Event ID (e.g. YP001) to stop live:');
+        if (eventId) await callLiveRoute('live-stop', { eventId });
+      };
+      if (btnPhase) btnPhase.onclick = async () => {
+        const eventId = prompt('Enter Event ID (e.g. YP001) to update phase:');
+        if (!eventId) return;
+        const currentPhase = prompt('Enter new phase (e.g. Preparation, Execution, Wrap-up):');
+        if (!currentPhase) return;
+        const comments = prompt('Any comments? (optional)') || '';
+        await callLiveRoute('live-phase', { eventId, currentPhase, comments });
+      };
+      if (btnTick) btnTick.onclick = () => callLiveRoute('tick-live');
+    });
+
+    // ---------------- Tabs ----------------
+    tabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        tabs.forEach(t => t.classList.remove('active'));
+        contentSections.forEach(s => s.classList.remove('active'));
+        tab.classList.add('active');
+        const tabName = tab.getAttribute('data-tab');
+        document.getElementById(`${tabName}Section`).classList.add('active');
+        loadDataForSection(tabName);
+        if (tabName === 'calendar') initializeCalendar();
+      });
+    });
+
+    // ---------------- Loads ----------------
+    async function loadAllData() {
+      showSpinner('events'); showSpinner('approvals'); showSpinner('tasks'); showSpinner('liveEvents');
+      try {
+        await Promise.all([loadStaffData(), loadYearlyEventsData(), loadApprovalsData(), loadTasksData(), loadLiveEventsData()]);
+        updateEventsTable(); updateApprovalsTable(); updateTasksTable(); updateLiveEventsTable();
+        updateStats(); updateTaskFormOptions();
+      } catch (e) {
+        console.error('Load error:', e);
+        alert('Error loading data. Check console / Sheets.');
+      } finally {
+        hideSpinner('events'); hideSpinner('approvals'); hideSpinner('tasks'); hideSpinner('liveEvents');
+      }
+    }
+    function loadDataForSection(name) {
+      switch (name) {
+        case 'events':
+          if (!yearlyEventsData.length) { showSpinner('events'); loadYearlyEventsData().then(()=>{updateEventsTable();hideSpinner('events');}).catch(()=>hideSpinner('events')); }
+          break;
+        case 'approvals':
+          if (!approvalsData.length) { showSpinner('approvals'); loadApprovalsData().then(()=>{updateApprovalsTable();hideSpinner('approvals');}).catch(()=>hideSpinner('approvals')); }
+          break;
+        case 'tasks':
+          if (!tasksData.length) { showSpinner('tasks'); Promise.all([loadTasksData(), loadStaffData()]).then(()=>{updateTasksTable(); updateTaskFormOptions(); hideSpinner('tasks');}).catch(()=>hideSpinner('tasks')); }
+          break;
+        case 'live':
+          if (!liveEventsData.length) { showSpinner('liveEvents'); loadLiveEventsData().then(()=>{updateLiveEventsTable(); hideSpinner('liveEvents');}).catch(()=>hideSpinner('liveEvents')); }
+          break;
+      }
+    }
+    async function loadStaffData() {
+      try { const r = await fetch(`${CONFIG.API_BASE_URL}?action=staff`);
+        if (!r.ok) throw new Error('staff'); const {data}=await r.json(); staffData = Array.isArray(data)?data:(data||[]);
+      } catch(e){ console.error('Staff load error',e); staffData=[]; }
+    }
+    async function loadYearlyEventsData() {
+      try { const r = await fetch(`${CONFIG.API_BASE_URL}?action=yearly-events`);
+        if (!r.ok) throw new Error('yearly'); const {data}=await r.json(); yearlyEventsData = Array.isArray(data)?data:(data||[]);
+      } catch(e){ console.error('Yearly load error',e); yearlyEventsData=[]; }
+    }
+    async function loadApprovalsData() {
+      try { const r = await fetch(`${CONFIG.API_BASE_URL}?action=approvals`);
+        if (!r.ok) throw new Error('approvals'); const {data}=await r.json(); approvalsData = Array.isArray(data)?data:(data||[]);
+      } catch(e){ console.error('Approvals load error',e); approvalsData=[]; }
+    }
+    async function loadTasksData() {
+      try { const r = await fetch(`${CONFIG.API_BASE_URL}?action=tasks`);
+        if (!r.ok) throw new Error('tasks'); const {data}=await r.json(); tasksData = Array.isArray(data)?data:(data||[]);
+      } catch(e){ console.error('Tasks load error',e); tasksData=[]; }
+    }
+    async function loadLiveEventsData() {
+      try { const r = await fetch(`${CONFIG.API_BASE_URL}?action=live-events`);
+        if (!r.ok) throw new Error('live'); const {data}=await r.json(); liveEventsData = Array.isArray(data)?data:(data||[]);
+      } catch(e){ console.error('Live load error',e); liveEventsData=[]; }
+    }
+
+    // ---------------- Calendar (de-dup) ----------------
+    let calendarInstance = null;
+    function initializeCalendar() {
+      const el = document.getElementById('calendar');
+      if (!el) return;
+      // Destroy previous calendar instance if exists
+      if (calendarInstance) {
+        calendarInstance.destroy();
+        calendarInstance = null;
+      }
+      const events = convertEventsForCalendar();
+      calendarInstance = new FullCalendar.Calendar(el, {
+        initialView:'dayGridMonth',
+        headerToolbar:{ left:'prev,next today', center:'title', right:'dayGridMonth,timeGridWeek,timeGridDay' },
+        events
+      });
+      calendarInstance.render();
+    }
+    function convertEventsForCalendar() {
+      const raw=[];
+      // Helper to robustly convert DD-MM-YYYY or YYYY-MM-DD to ISO (YYYY-MM-DD)
+      function toISO(dateStr) {
+        if (!dateStr) return '';
+        // If already ISO
+        if (/^\d{4}-\d{2}-\d{2}/.test(dateStr)) return dateStr.slice(0,10);
+        // If DD-MM-YYYY
+        if (/^\d{2}-\d{2}-\d{4}/.test(dateStr)) {
+          const [d,m,y] = dateStr.slice(0,10).split('-');
+          return `${y}-${m}-${d}`;
+        }
+        return dateStr;
+      }
+      // Yearly events
+      yearlyEventsData.forEach(ev=>{
+        const dmy = String(ev.date||'');
+        raw.push({
+          keyType:'yearlyEvent',
+          title: ev.title||'',
+          date: dmy,
+          start: toISO(dmy), // FC needs YYYY-MM-DD
+          bg:'#4361ee', border:'#4361ee', id:ev.id||ev.ID
+        });
+      });
+      // Approvals
+      approvalsData.forEach(a=>{
+        const dmy = String(a.date||'');
+        raw.push({
+          keyType:'approval',
+          title: a.title||'',
+          date: dmy,
+          start: toISO(dmy),
+          bg:'#f72585', border:'#f72585',
+          id: a.eventId || a.id
+        });
+      });
+      // Live (fall back to updatedAt)
+      liveEventsData.forEach(l=>{
+        const dmy = String(l.startedAt||l.updatedAt||'');
+        let iso = '';
+        if (dmy.includes('-')) {
+          if (dmy.split('-')[0].length===2) {
+            iso = toISO(dmy.slice(0,10));
+          } else {
+            iso = dmy.slice(0,10);
+          }
+        }
+        raw.push({ keyType:'live', title:'Live Event', date: dmy.slice(0,10), start: iso, bg:'#4cc9f0', border:'#4cc9f0', id:l.id||l.ID });
+      });
+
+      // De-dup by (title,date) with priority: live > approval > yearly
+      const priority={live:3, approval:2, yearlyEvent:1};
+      const map=new Map();
+      raw.forEach(it=>{
+        const k=`${norm(it.title)}|${it.date}`;
+        const prev=map.get(k);
+        if (!prev || priority[it.keyType]>priority[prev.keyType]) map.set(k,it);
+      });
+      return [...map.values()].map(x=>({
+        title: x.keyType==='approval'?`${x.title} (Approval)`:x.title,
+        start: x.start,
+        backgroundColor:x.bg, borderColor:x.border,
+        extendedProps:{ type:x.keyType, id:x.id }
+      }));
+    }
+
+    // ---------------- Tables / Stats ----------------
+    function updateEventsTable() {
+      const tbody = document.getElementById('eventsTableBody');
+      tbody.innerHTML='';
+      if (!yearlyEventsData.length){ tbody.innerHTML='<tr><td colspan="7" style="text-align:center;">No events found</td></tr>'; return; }
+      const isAdmin = currentUser.role==='admin';
+      yearlyEventsData.forEach(ev=>{
+        const id=ev.id||'';
+        const status = ev.status || 'Pending';
+        // Format date as DD-MM-YYYY
+        let dateStr = ev.date || '';
+        if (/^\d{4}-\d{2}-\d{2}/.test(dateStr)) {
+          // ISO string, convert to DD-MM-YYYY
+          const [y, m, d] = dateStr.slice(0,10).split('-');
+          dateStr = `${d}-${m}-${y}`;
+        }
+        const row=document.createElement('tr');
+        row.innerHTML=`
+          <td>${displayId(id,'YP')}</td>
+          <td>${ev.title||''}</td>
+          <td>${dateStr}</td>
+          <td>${ev.category||''}</td>
+          <td>${ev.assignedTo||''}</td>
+          <td><span class="status-badge status-${norm(status)}">${status}</span></td>
+          <td class="action-buttons">
+            ${!isAdmin && isEventAssignedToUser(ev,currentUser) ? `
+              <button class="btn btn-primary" data-action="send-approval" data-eventid="${id}"
+                data-title="${encodeURIComponent(ev.title||'')}" data-date="${dmyToISO(ev.date||'')}">
+                <i class="fas fa-paper-plane"></i> Send for Approval
+              </button>` : ``}
+          </td>`;
+        tbody.appendChild(row);
+      });
+    }
+    function updateApprovalsTable() {
+      const tbody = document.getElementById('approvalsTableBody');
+      tbody.innerHTML='';
+      if (!approvalsData.length){ tbody.innerHTML='<tr><td colspan="7" style="text-align:center;">No approvals found</td></tr>'; return; }
+      const isAdmin=currentUser.role==='admin';
+      approvalsData.forEach(a=>{
+        const apId=a.id||'';      // EV-###
+        const evId=a.eventId||''; // YP###
+        const status=a.status||'Pending';
+        const row=document.createElement('tr');
+        row.innerHTML=`
+          <td>${displayId(apId,'EV-')}</td>
+          <td>${displayId(evId,'YP')}</td>
+          <td>${a.title||''}</td>
+          <td>${a.date||''}</td>
+          <td>${a.teacherEmail||''}</td>
+          <td><span class="status-badge status-${norm(status)}">${status}</span></td>
+          <td class="action-buttons">
+            <button class="btn btn-outline" data-action="view" data-id="${apId}">
+              <i class="fas fa-eye"></i> View
+            </button>
+            ${isAdmin ? `
+              <button class="btn btn-success" data-action="approve" data-id="${evId || apId}"><i class="fas fa-check"></i> Approve</button>
+              <button class="btn btn-warning" data-action="requestChanges" data-id="${evId || apId}"><i class="fas fa-edit"></i> Request Changes</button>
+            `:''}
+          </td>`;
+        tbody.appendChild(row);
+      });
+    }
+    function updateTasksTable() {
+      const tbody = document.getElementById('tasksTableBody');
+      tbody.innerHTML='';
+      if (!tasksData.length){ tbody.innerHTML='<tr><td colspan="9" style="text-align:center;">No tasks found</td></tr>'; return; }
+      const isAdmin=currentUser.role==='admin';
+      tasksData.forEach(t=>{
+        const row=document.createElement('tr');
+        row.innerHTML=`
+          <td>${displayId(t.id||'','T-')}</td>
+          <td>${displayId(t.eventId||'','YP')}</td>
+          <td>${t.title||''}</td>
+          <td>${t.date||''}</td>
+          <td>${t.startTime||''}</td>
+          <td>${t.endTime||''}</td>
+          <td>${t.createdBy||''}</td>
+          <td><span class="status-badge status-${norm(t.status||'pending')}">${t.status||'Pending'}</span></td>
+          <td class="action-buttons">
+            ${isAdmin ? `<button class="btn btn-outline" data-action="edit-task" data-id="${t.id||''}">
+              <i class="fas fa-user-edit"></i> Edit / Assign</button>`:''}
+          </td>`;
+        tbody.appendChild(row);
+      });
+    }
+    function updateLiveEventsTable() {
+      const tbody = document.getElementById('liveEventsTableBody');
+      tbody.innerHTML='';
+      if (!liveEventsData.length){ tbody.innerHTML='<tr><td colspan="9" style="text-align:center;">No live events found</td></tr>'; return; }
+      liveEventsData.forEach(l=>{
+        const row=document.createElement('tr');
+        row.innerHTML=`
+          <td>${l.id||''}</td>
+          <td>${displayId(l.eventId||'','YP')}</td>
+          <td>${l.status||''}</td>
+          <td>${l.startedAt||''}</td>
+          <td>${l.endedAt||''}</td>
+          <td>${l.updatedAt||''}</td>
+          <td>${l.updatedBy||''}</td>
+          <td>${l.currentPhase||''}</td>
+          <td>${l.comments||''}</td>`;
+        tbody.appendChild(row);
+      });
+    }
+    function updateStats() {
+      document.getElementById('totalEvents').textContent = yearlyEventsData.length;
+      document.getElementById('approvedEvents').textContent =
+        yearlyEventsData.filter(e => norm(e.status||'')==='approved').length;
+      document.getElementById('pendingApprovals').textContent =
+        approvalsData.filter(a => norm(a.status||'')==='pending').length;
+      document.getElementById('activeTasks').textContent =
+        tasksData.filter(t => norm(t.status||'')!=='completed').length;
+    }
+
+    // ---------------- Approved Events for Tasks (role rules) ----------------
+    function approvedEventIdsFromApprovals() {
+      const set = new Set();
+      approvalsData.forEach(a=>{
+        if (norm(a.status||'')!=='approved') return;
+        const eid=a.eventId;
+        if (eid) set.add(String(eid));
+      });
+      return set;
+    }
+    function updateTaskFormOptions() {
+      const eventSelect = document.getElementById('taskEvent');
+      const assignedToSelect = document.getElementById('assignedTo');
+      const assignedToGroup = assignedToSelect?.closest('.form-group');
+
+      const approvedMap = approvedEventIdsFromApprovals();
+
+      // Teachers: only approved events assigned to them
+      // Admins: all approved events
+      const allowedEvents = yearlyEventsData.filter(ev => {
+        const id = String(ev.id || '');
+        const isApproved = norm(ev.status || '') === 'approved' || approvedMap.has(id);
+        if (!isApproved) return false;
+        if (currentUser.role === 'admin') return true;
+        // Teacher: must be assigned
+        return isEventAssignedToUser(ev, currentUser);
+      });
+
+      eventSelect.innerHTML = '';
+      if (allowedEvents.length === 0) {
+        const opt = document.createElement('option');
+        opt.value = '';
+        opt.textContent = 'No approved events available';
+        opt.disabled = true;
+        opt.selected = true;
+        eventSelect.appendChild(opt);
+      } else {
+        const opt = document.createElement('option');
+        opt.value = '';
+        opt.textContent = 'Select Approved Event';
+        eventSelect.appendChild(opt);
+        allowedEvents.forEach(ev => {
+          const opt = document.createElement('option');
+          opt.value = String(ev.id || '');
+          opt.textContent = `${displayId(ev.id || '', 'YP')} — ${ev.title || 'Untitled Event'}`;
+          eventSelect.appendChild(opt);
+        });
+      }
+
+      // Assignee select visibility and options
+      if (currentUser.role === 'admin') {
+        if (assignedToGroup) assignedToGroup.style.display = '';
+        assignedToSelect.multiple = true;
+        assignedToSelect.innerHTML = '';
+        staffData.forEach(s => {
+          const opt = document.createElement('option');
+          opt.value = s.email || '';
+          opt.textContent = s.name || s.email || 'Unnamed';
+          assignedToSelect.appendChild(opt);
+        });
+        assignedToSelect.disabled = false;
+      } else {
+        // Teacher: hide assignee select entirely
+        if (assignedToGroup) assignedToGroup.style.display = 'none';
+        assignedToSelect.innerHTML = '';
+      }
+    }
+
+    // ---------------- Create Approval (teacher) ----------------
+    async function submitApprovalRequest() {
+      const newApprovalId = nextId('EV-', approvalsData, 'id');
+      // If reviewerEmail/reviewNotes fields exist, include them, else default to empty string
+      const reviewerEmailInput = document.getElementById('reviewerEmail');
+      const reviewNotesInput = document.getElementById('reviewNotes');
+      const payload = {
+        id: newApprovalId,
+        eventId: approvalEventIdInput.value || '',
+        teacherEmail: currentUser.email,
+        title: eventTitleInput.value,
+        date: eventDateInput.value,
+        startTime: startTimeInput.value,
+        endTime: endTimeInput.value,
+        description: descriptionInput.value || '',
+        budget: budgetINRInput.value || '',
+        props: propsInput?.value || '',
+        plan:  planInput?.value  || '',
+        status: 'Pending',
+        reviewerEmail: reviewerEmailInput ? reviewerEmailInput.value : '',
+        reviewNotes: reviewNotesInput ? reviewNotesInput.value : '',
+        createdAt: new Date().toISOString()
+      };
+      try {
+        await fetch(`${CONFIG.API_BASE_URL}?action=approvals`, {
+          method:'POST', mode:'no-cors', headers:{'Content-Type':'text/plain'}, body:JSON.stringify(payload)
+        });
+        alert(`Approval submitted (ID: ${newApprovalId}).`);
+        approvalRequestForm.reset();
+        approvalEventIdInput.value = '';
+        if (propsInput) propsInput.value = '';
+        if (planInput)  planInput.value  = '';
+        await loadApprovalsData(); updateApprovalsTable(); updateStats(); updateTaskFormOptions();
+      } catch(e){ console.error(e); alert('Approval submit failed'); }
+    }
+
+    // ---------------- Create Task (role rules + notifications) ----------------
+    async function createTask() {
+      const eventId = document.getElementById('taskEvent').value;
+      let assignees = [];
+      if (currentUser.role === 'admin') {
+        const assignedSelect = document.getElementById('assignedTo');
+        assignees = [...assignedSelect.selectedOptions].map(o => o.value).filter(Boolean);
+      } // Teachers: no assignees at creation
+
+      // Teacher guard: can only create for approved events assigned to them
+      if (currentUser.role !== 'admin') {
+        const approvedMap = approvedEventIdsFromApprovals();
+        const canUse = yearlyEventsData.some(ev => {
+          const id = String(ev.id || '');
+          const ok = (norm(ev.status || '') === 'approved' || approvedMap.has(id)) && isEventAssignedToUser(ev, currentUser);
+          return id === eventId && ok;
+        });
+        if (!canUse) {
+          alert('You can create tasks only for your approved events assigned to you.');
+          return;
+        }
+      }
+
+      const newTaskId = nextId('T-', tasksData, 'id');
+      const payload = {
+        id: newTaskId,
+        eventId,
+        title: document.getElementById('taskTitle').value,
+        date: isoToDMY(document.getElementById('taskDate').value), // DD-MM-YYYY
+        startTime: document.getElementById('taskStart').value,
+        endTime: document.getElementById('taskEnd').value,
+        createdBy: currentUser.email,
+        status: 'Pending',
+        assignedTo: (currentUser.role === 'admin') ? assignees.join(', ') : ''
+      };
+
+      try {
+        await fetch(`${CONFIG.API_BASE_URL}?action=tasks`, {
+          method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify(payload)
+        });
+        // Notify (best-effort)
+        if (currentUser.role === 'admin') notifyAssignees(payload, assignees);
+        alert(`Task created (ID: ${newTaskId}).`);
+        taskForm.reset();
+        await loadTasksData(); updateTasksTable(); updateStats();
+      } catch (e) { console.error('Task create error:', e); alert('Task create failed'); }
+    }
+
+    // ---------------- Email Notifications ----------------
+    async function notifyAssignees(task, emails) {
+      if (!emails || !emails.length) return;
+      const notePayload = {
+        emails,
+        task: {
+          id: task.id, title: task.title, date: task.date,
+          startTime: task.startTime, endTime: task.endTime,
+          eventId: task.eventId, createdBy: task.createdBy
+        }
+      };
+      try {
+        await fetch(`${CONFIG.API_BASE_URL}?action=notify-task`, {
+          method:'POST', mode:'no-cors', headers:{'Content-Type':'text/plain'}, body:JSON.stringify(notePayload)
+        });
+      } catch (e) { console.warn('Notify failed (non-blocking)', e); }
+    }
+
+    // ---------------- Approvals actions ----------------
+    // Helpers for formatting date/time in modal
+    function fmtSheetDate(val) {
+      if (!val) return '—';
+      // Accepts DD-MM-YYYY or YYYY-MM-DD
+      if (/^\d{4}-\d{2}-\d{2}$/.test(val)) {
+        const [y,m,d] = val.split('-');
+        return `${d}-${m}-${y}`;
+      }
+      return val;
+    }
+    function fmtSheetTime(val) {
+      if (!val) return '';
+      // Accepts HH:mm or HH:mm:ss
+      return val.length > 5 ? val.slice(0,5) : val;
+    }
+
+    document.getElementById('approvalsTableBody').addEventListener('click', async (e) => {
+      const btn = e.target.closest('button[data-action]'); if (!btn) return;
+      const action = btn.dataset.action; const id = btn.dataset.id||'';
+      if (action==='view') {
+        const a = approvalsData.find(x => String(x.id||x.eventId||'') === String(id)) || {};
+        const rows = [
+          ['Approval ID', displayId(a.id||'','EV-')],
+          ['Event ID',    displayId(a.eventId||'','YP')],
+          ['Title',       a.title||'—'],
+          ['Date',        fmtSheetDate(a.date||'')],
+          ['Start',       fmtSheetTime(a.startTime||'')],
+          ['End',         fmtSheetTime(a.endTime||'')],
+          ['Teacher',     a.teacherEmail||'—'],
+          ['Budget (INR)',a.budget||'—'],
+          ['Props',       a.props||'—'],    // <— NEW
+          ['Plan',        a.plan||'—'],     // <— NEW
+          ['Status',      a.status||'—'],
+          ['Description', a.description||'—']
+        ];
+        openModal('Approval Details', `
+          <table style="width:100%; border-collapse:collapse;">
+            <tbody>${rows.map(([k,v])=>`<tr><th style="text-align:left;padding:8px 12px;background:#f8f9fa;width:35%;">${k}</th><td style="padding:8px 12px;border-bottom:1px solid #eee;">${v}</td></tr>`).join('')}</tbody>
+          </table>`);
+      }
+      if (action==='approve') await updateApprovalStatus(id,'Approved');
+      if (action==='requestChanges') await updateApprovalStatus(id,'Changes Requested');
+    });
+
+    // Yearly: Send for Approval
+    document.getElementById('eventsTableBody').addEventListener('click', (e) => {
+      const btn = e.target.closest('button[data-action="send-approval"]'); if (!btn) return;
+      approvalEventIdInput.value = btn.dataset.eventid || '';
+      eventTitleInput.value = decodeURIComponent(btn.dataset.title || '');
+      eventDateInput.value = btn.dataset.date || ''; // ISO for <input type="date">
+      startTimeInput.value=''; endTimeInput.value=''; descriptionInput.value=''; budgetINRInput.value='';
+      switchToTab('approvals'); setTimeout(()=>eventTitleInput.focus(), 50);
+    });
+
+    // Update approval status + mirror in Yearly
+    async function updateApprovalStatus(eventOrApprovalId, newStatus) {
+      if (!eventOrApprovalId) return;
+      approvalsData.forEach(a=>{
+        const any=String(a.id||a.eventId||'');
+        if (any===String(eventOrApprovalId)) { a.status=newStatus; }
+      });
+      yearlyEventsData.forEach(ev=>{
+        const yid=String(ev.id||''); if (yid===String(eventOrApprovalId) && newStatus==='Approved') ev.status='Approved';
+      });
+      updateApprovalsTable(); updateEventsTable(); updateTaskFormOptions(); updateStats();
+      try {
+        await fetch(`${CONFIG.API_BASE_URL}?action=update-approval-status`, {
+          method:'POST', mode:'no-cors', headers:{'Content-Type':'text/plain'},
+          body: JSON.stringify({ id:eventOrApprovalId, status:newStatus })
+        });
+        try { await loadApprovalsData(); updateApprovalsTable(); } catch {}
+      } catch (err){ console.warn('Status persist failed',err); }
+    }
+
+    // Tasks table delegation (Admin edit)
+    document.getElementById('tasksTableBody').addEventListener('click', (e)=>{
+      const btn=e.target.closest('button[data-action="edit-task"]'); if (!btn) return;
+      if (currentUser.role!=='admin') return;
+      const tid=btn.dataset.id;
+      const task=(tasksData||[]).find(t=>String(t.id||'')===String(tid)); if (!task) return;
+      openTaskEdit(task);
+    });
+
+    // Task Edit modal helpers
+    function openTaskEdit(task){
+      // Approved events list for admins
+      const approvedMap=approvedEventIdsFromApprovals();
+      const allowed=yearlyEventsData.filter(ev=>{
+        const id=String(ev.id||''); return norm(ev.status||'')==='approved' || approvedMap.has(id);
+      });
+      editTaskEvent.innerHTML='';
+      allowed.forEach(ev=>{
+        const opt=document.createElement('option');
+        opt.value=String(ev.id||'');
+        opt.textContent=`${displayId(ev.id||'','YP')} — ${ev.title||''}`;
+        editTaskEvent.appendChild(opt);
+      });
+
+      // Assignee list (multi)
+      editAssignedTo.innerHTML='';
+      staffData.forEach(s=>{
+        const opt=document.createElement('option');
+        opt.value=s.email||''; opt.textContent=s.name||s.email||'';
+        editAssignedTo.appendChild(opt);
+      });
+
+      // Prefill
+      editTaskId.value=task.id||'';
+      editTaskEvent.value=task.eventId||'';
+      editTaskTitle.value=task.title||'';
+      editTaskDate.value=dmyToISO(String(task.date||'')); // input needs ISO
+      editTaskStart.value=task.startTime||'';
+      editTaskEnd.value=task.endTime||'';
+      editTaskStatus.value=task.status||'Pending';
+
+      const selected = String(task.assignedTo||'').split(',').map(s=>norm(s.trim()));
+      [...editAssignedTo.options].forEach(o=>{ o.selected = selected.includes(norm(o.value)); });
+
+      taskEditBackdrop.style.display='flex';
+      taskEditBackdrop.setAttribute('aria-hidden','false');
+    }
+    function closeTaskEdit(){
+      taskEditBackdrop.style.display='none';
+      taskEditBackdrop.setAttribute('aria-hidden','true');
+    }
+    taskEditClose.addEventListener('click', closeTaskEdit);
+    taskEditCancel.addEventListener('click', closeTaskEdit);
+    taskEditBackdrop.addEventListener('click', (e)=>{ if (e.target===taskEditBackdrop) closeTaskEdit(); });
+    document.addEventListener('keydown', (e)=>{ if (e.key==='Escape' && taskEditBackdrop.style.display==='flex') closeTaskEdit(); });
+
+    // Save Task Edit (Admin)
+    taskEditForm.addEventListener('submit', async (e)=>{
+      e.preventDefault();
+      const assignees=[...editAssignedTo.selectedOptions].map(o=>o.value);
+      const updated={
+        id: editTaskId.value,
+        eventId: editTaskEvent.value,
+        title: editTaskTitle.value,
+        date: isoToDMY(editTaskDate.value),
+        startTime: editTaskStart.value,
+        endTime: editTaskEnd.value,
+        status: editTaskStatus.value,
+        assignedTo: assignees.join(', ')
+      };
+
+      // Optimistic update
+      tasksData = tasksData.map(t=> String(t.id||'')===String(updated.id) ? {...t, ...updated} : t);
+      updateTasksTable();
+
+      try {
+        await fetch(`${CONFIG.API_BASE_URL}?action=tasks-update`, {
+          method:'POST', mode:'no-cors', headers:{'Content-Type':'text/plain'}, body:JSON.stringify(updated)
+        });
+        notifyAssignees(updated, assignees);
+        closeTaskEdit();
+        try { await loadTasksData(); updateTasksTable(); } catch {}
+      } catch(err){ console.warn('Task update failed',err); }
+    });
+
+    // ---------------- Modal helpers ----------------
+    function openModal(title, html) {
+      modalTitleEl.textContent = title || 'Details';
+      modalBodyEl.innerHTML = html || '';
+      modalBackdrop.style.display = 'flex';
+      modalBackdrop.setAttribute('aria-hidden', 'false');
+    }
+    function closeModal() {
+      modalBackdrop.style.display = 'none';
+      modalBackdrop.setAttribute('aria-hidden', 'true');
+    }
+    modalCloseBtn.addEventListener('click', closeModal);
+    modalCancelBtn.addEventListener('click', closeModal);
+    modalBackdrop.addEventListener('click', (e) => { if (e.target === modalBackdrop) closeModal(); });
+
+    // ---------------- Forms ----------------
+    approvalRequestForm?.addEventListener('submit', (e)=>{ e.preventDefault(); submitApprovalRequest(); });
+    taskForm.addEventListener('submit', (e)=>{ e.preventDefault(); createTask(); });
+
+    // ---------------- Spinners ----------------
+    function showSpinner(section){ const el=document.getElementById(`${section}Spinner`); if(el) el.style.display='block'; }
+    function hideSpinner(section){ const el=document.getElementById(`${section}Spinner`); if(el) el.style.display='none'; }
+
+    // ---------------- Tab switch helper ----------------
+    function switchToTab(name) {
+      tabs.forEach(t => t.classList.remove('active'));
+      contentSections.forEach(s => s.classList.remove('active'));
+      const tab = [...tabs].find(t => t.dataset.tab === name); if (tab) tab.classList.add('active');
+      const sec = document.getElementById(`${name}Section`); if (sec) sec.classList.add('active');
+    }
+  </script>
+</body>
+</html>
